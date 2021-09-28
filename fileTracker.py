@@ -3,6 +3,7 @@ from os import listdir
 from openpyxl import load_workbook
 import pandas as pd
 from datetime import datetime
+import xlrd
 
 class fileTracker:
     def __init__(self,pas,path,filename):
@@ -14,11 +15,12 @@ class fileTracker:
          
     
     def getTracker(self):
-        df = pd.read_excel(self.path + self.filename)
+        df = pd.read_excel(self.path + self.filename,'Data_Ingest_Tracker')
         return df
 
     def updateTracker(self):
         tempTrack = self.currentTracker
+        print(tempTrack['Dataset_ID'].max())
         lastID = 1 + tempTrack['Dataset_ID'].max()
         for pa in self.pas:
             for file in pa.files:
@@ -74,9 +76,14 @@ class dataset:
 
     def getTabs(self):
         tabs = []
-        if self.name.endswith('.xlsx') or self.name.endswith('.xls'):
+        if self.name.endswith('.xlsx'):
             xlFile = load_workbook(os.path.join(self.filepath,self.name), read_only=True)
             for sheet in xlFile.sheetnames:
+                tabs.append(sheet)
+        if self.name.endswith('.xls'):
+            xlFile = xlrd.open_workbook(os.path.join(self.filepath,self.name), on_demand=True)
+            sheets = xlFile.sheet_names()
+            for sheet in sheets:
                 tabs.append(sheet)
         return tabs
     
@@ -84,8 +91,8 @@ class dataset:
         print(self.name)
 
 
+PA = pa("PA NAME",["PATH TO PA DATA"])
 
-#test run
-testPA1 = pa("PA NAME",["PATH TO PA RAW DATA"])
-testTracker = fileTracker([testPA1],"PATH TO TRACKER","Data_Ingest_Tracker.xlsx")
+
+testTracker = fileTracker([PA],"PATH TO DATASET TRACKER","DATASET TRACKER FILE NAME")
 testTracker.exportTracker()
